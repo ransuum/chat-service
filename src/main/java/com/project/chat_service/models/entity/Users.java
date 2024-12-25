@@ -35,7 +35,7 @@ public class Users implements Serializable {
     @Column(unique = true, nullable = false)
     private String phone;
 
-    @Column(nullable = false, name = "username")
+    @Column(nullable = false, name = "username", unique = true)
     private String username;
 
     @Column(unique = true, nullable = false)
