@@ -4,11 +4,10 @@ import com.project.chat_service.models.request.SignInRequest;
 import com.project.chat_service.models.request.SignUpRequest;
 import com.project.chat_service.security.utils.AuthUtils;
 import com.project.chat_service.service.UserService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,13 +17,12 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
     private final UserService userService;
-    private final AuthUtils authUtils;
 
-    public UserController(UserService userService, AuthUtils authUtils) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.authUtils = authUtils;
     }
 
     @GetMapping("/register")
@@ -55,16 +53,7 @@ public class UserController {
 
     @PostMapping("/sign-in")
     public String signIn(@Valid @ModelAttribute SignInRequest sign, HttpServletResponse response) {
-        String token = authUtils.auth(sign);
-
-        Cookie jwtCookie = new Cookie("Authorization", token);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(3600);
-
-        response.addCookie(jwtCookie);
-
+        userService.authenticate(sign, response);
         return "redirect:/api/interface";
     }
 

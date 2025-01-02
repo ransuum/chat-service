@@ -36,7 +36,6 @@ public class JwtTokenUtils {
     public UserDetails userDetails(String email) {
         return usersRepo.findByEmail(email)
                 .map(UserInfoConfig::new)
-                .orElseThrow(()
-                        -> new UsernameNotFoundException("UserEmail: " + email + " does not exist"));
+                .orElseThrow(() -> new UsernameNotFoundException("UserEmail: " + email + " does not exist"));
     }
 }

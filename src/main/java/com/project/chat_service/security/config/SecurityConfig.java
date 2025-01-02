@@ -13,17 +13,18 @@ import com.project.chat_service.security.utils.JwtTokenUtils;
 import com.project.chat_service.security.LogoutHandlerService;
 import com.project.chat_service.security.filter.JwtRefreshTokenFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -42,23 +43,15 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
-
     private final UserInfoManagerConfig userInfoManagerConfig;
     private final RSAKeyRecord rsaKeyRecord;
     private final JwtTokenUtils jwtTokenUtils;
     private final RefreshTokenRepo refreshTokenRepo;
     private final LogoutHandlerService logoutHandlerService;
-
-    public SecurityConfig(UserInfoManagerConfig userInfoManagerConfig, RSAKeyRecord rsaKeyRecord,
-                          JwtTokenUtils jwtTokenUtils, RefreshTokenRepo refreshTokenRepo,
-                          LogoutHandlerService logoutHandlerService) {
-        this.userInfoManagerConfig = userInfoManagerConfig;
-        this.rsaKeyRecord = rsaKeyRecord;
-        this.jwtTokenUtils = jwtTokenUtils;
-        this.refreshTokenRepo = refreshTokenRepo;
-        this.logoutHandlerService = logoutHandlerService;
-    }
+    private final UserDetailsService userDetailsService;
 
     @Order(1)
     @Bean
@@ -67,7 +60,7 @@ public class SecurityConfig {
                 .securityMatcher(new AntPathRequestMatcher("/user/sign-in/**"))
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(withDefaults())
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .userDetailsService(userInfoManagerConfig)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> {
@@ -165,11 +158,4 @@ public class SecurityConfig {
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
-
 }

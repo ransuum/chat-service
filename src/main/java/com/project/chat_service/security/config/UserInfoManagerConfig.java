@@ -17,7 +17,6 @@ public class UserInfoManagerConfig implements UserDetailsService {
     public UserDetails loadUserByUsername(String emailId) throws UsernameNotFoundException {
         return usersRepo.findByEmail(emailId)
                 .map(UserInfoConfig::new)
-                .orElseThrow(()
-                        -> new UsernameNotFoundException("UserEmail: " + emailId + " does not exist"));
+                .orElseThrow(() -> new UsernameNotFoundException("UserEmail: " + emailId + " does not exist"));
     }
 }

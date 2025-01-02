@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public record SignUpRequest(
         @NotBlank(message = "firstname is blank")
@@ -35,7 +36,7 @@ public record SignUpRequest(
         String phone) {
 
         public SignUpRequest encodingPassword(String new_password) {
-                return new SignUpRequest(firstname, username, password, email, lastname, new_password, phone);
+                return new SignUpRequest(firstname, username, password, email, lastname, new BCryptPasswordEncoder().encode(new_password), phone);
         }
 
         public static SignUpRequest empty() {

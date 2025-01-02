@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,23 +26,23 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAccessTokenFilter extends OncePerRequestFilter {
 
     private final RSAKeyRecord rsaKeyRecord;
     private final JwtTokenUtils jwtTokenUtils;
-
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws IOException, ServletException {
 
-        try {
+        try{
             final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-            final JwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(rsaKeyRecord.rsaPublicKey()).build();
+            JwtDecoder jwtDecoder =  NimbusJwtDecoder.withPublicKey(rsaKeyRecord.rsaPublicKey()).build();
 
-            if (!authHeader.startsWith(TokenType.Bearer.name())) {
-                filterChain.doFilter(request, response);
+            if(!authHeader.startsWith(TokenType.Bearer.name())){
+                filterChain.doFilter(request,response);
                 return;
             }
 
@@ -50,9 +51,10 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
 
             final String userName = jwtTokenUtils.getUserName(jwtToken);
 
-            if (!userName.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if(!userName.isEmpty() && SecurityContextHolder.getContext().getAuthentication() == null){
+
                 UserDetails userDetails = jwtTokenUtils.userDetails(userName);
-                if (jwtTokenUtils.isTokenValid(jwtToken, userDetails)) {
+                if(jwtTokenUtils.isTokenValid(jwtToken,userDetails)){
                     SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 
                     UsernamePasswordAuthenticationToken createdToken = new UsernamePasswordAuthenticationToken(
@@ -66,9 +68,9 @@ public class JwtAccessTokenFilter extends OncePerRequestFilter {
                     SecurityContextHolder.setContext(securityContext);
                 }
             }
-            filterChain.doFilter(request, response);
-        } catch (JwtValidationException jwtValidationException) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, jwtValidationException.getMessage());
+            filterChain.doFilter(request,response);
+        }catch (JwtValidationException jwtValidationException){
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,jwtValidationException.getMessage());
         }
     }
 }
