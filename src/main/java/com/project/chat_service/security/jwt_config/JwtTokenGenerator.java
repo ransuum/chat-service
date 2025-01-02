@@ -13,11 +13,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class JwtTokenGenerator {
-
     private final JwtEncoder jwtEncoder;
     private final Map<Roles, Permissions> permissionsMap;
 
@@ -28,8 +29,13 @@ public class JwtTokenGenerator {
     }
 
     public String generateAccessToken(Authentication authentication) {
-        String roles = getRolesOfUser(authentication);
-        String permissions = String.join(" ", permissionsMap.get(Roles.valueOf(roles)).fillPermissions());
+        Set<String> roles = getRolesOfUser(authentication);
+
+        Set<String> permissions = roles.stream()
+                .map(role -> permissionsMap.get(Roles.valueOf(role)))
+                .filter(Objects::nonNull)
+                .flatMap(permission -> permission.fillPermissions().stream())
+                .collect(Collectors.toSet());
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("atquil")
@@ -41,10 +47,10 @@ public class JwtTokenGenerator {
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
     }
 
-    private static String getRolesOfUser(Authentication authentication) {
+    private static Set<String> getRolesOfUser(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.toSet());
     }
 
     public String generateRefreshToken(Authentication authentication) {

@@ -4,6 +4,7 @@ import com.project.chat_service.models.request.SignInRequest;
 import com.project.chat_service.models.request.SignUpRequest;
 import com.project.chat_service.security.utils.AuthUtils;
 import com.project.chat_service.service.UserService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -49,13 +50,22 @@ public class UserController {
         }
 
         userService.registerUser(signUpRequest, httpServletResponse);
-        return "login";
+        return "redirect:/user/login";
     }
 
     @PostMapping("/sign-in")
-    public String signIn(@Valid @ModelAttribute SignInRequest sign) {
-        authUtils.auth(sign);
-        return "redirect:/menu";
+    public String signIn(@Valid @ModelAttribute SignInRequest sign, HttpServletResponse response) {
+        String token = authUtils.auth(sign);
+
+        Cookie jwtCookie = new Cookie("Authorization", token);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(3600);
+
+        response.addCookie(jwtCookie);
+
+        return "redirect:/api/interface";
     }
 
 }

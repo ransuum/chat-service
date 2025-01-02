@@ -52,12 +52,14 @@ public class AuthUtils {
         refreshTokenRepo.save(refreshTokenEntity);
     }
 
-    public void auth(SignInRequest sign) {
+    public String auth(SignInRequest sign) {
         final var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(sign.email(), sign.password())
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return generateTokenForAccess(authentication);
     }
 
     public Object getAccessTokenUsingRefreshToken(String authorizationHeader) {
