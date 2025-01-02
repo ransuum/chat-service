@@ -12,6 +12,7 @@ import jakarta.persistence.Entity;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -26,10 +27,10 @@ public class Users implements Serializable {
     @Column(nullable = false, updatable = false)
     private String id;
 
-    @Column(nullable = false, name = "first_name")
+    @Column(nullable = false, name = "firstname")
     private String firstname;
 
-    @Column(nullable = false, name = "last_name")
+    @Column(nullable = false, name = "lastname")
     private String lastname;
 
     @Column(unique = true, nullable = false)
@@ -53,7 +54,7 @@ public class Users implements Serializable {
     private List<RefreshToken> refreshTokens;
 
     @CreatedDate
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     private String address;
 }

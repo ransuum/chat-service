@@ -37,4 +37,8 @@ public record SignUpRequest(
         public SignUpRequest encodingPassword(String new_password) {
                 return new SignUpRequest(firstname, username, password, email, lastname, new_password, phone);
         }
+
+        public static SignUpRequest empty() {
+                return new SignUpRequest("", "", "", "", "", "", "");
+        }
 }

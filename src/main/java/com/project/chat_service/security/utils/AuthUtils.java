@@ -1,17 +1,21 @@
 package com.project.chat_service.security.utils;
 
+import com.project.chat_service.exception.NotFoundException;
 import com.project.chat_service.models.dto.AuthResponse;
 import com.project.chat_service.models.entity.RefreshToken;
 import com.project.chat_service.models.entity.Users;
 import com.project.chat_service.models.enums.TokenType;
+import com.project.chat_service.models.request.SignInRequest;
 import com.project.chat_service.repository.RefreshTokenRepo;
 import com.project.chat_service.security.jwt_config.JwtTokenGenerator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,10 +25,13 @@ import java.util.Arrays;
 public class AuthUtils {
     private final RefreshTokenRepo refreshTokenRepo;
     private final JwtTokenGenerator jwtTokenGenerator;
+    private final AuthenticationManager authenticationManager;
 
-    public AuthUtils(RefreshTokenRepo refreshTokenRepo, JwtTokenGenerator jwtTokenGenerator) {
+    public AuthUtils(RefreshTokenRepo refreshTokenRepo, JwtTokenGenerator jwtTokenGenerator,
+                     AuthenticationManager authenticationManager) {
         this.refreshTokenRepo = refreshTokenRepo;
         this.jwtTokenGenerator = jwtTokenGenerator;
+        this.authenticationManager = authenticationManager;
     }
 
     public Cookie creatRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
@@ -45,6 +52,14 @@ public class AuthUtils {
         refreshTokenRepo.save(refreshTokenEntity);
     }
 
+    public void auth(SignInRequest sign) {
+        final var authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(sign.email(), sign.password())
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
     public Object getAccessTokenUsingRefreshToken(String authorizationHeader) {
 
         if (!authorizationHeader.startsWith(TokenType.Bearer.name())) {
@@ -59,9 +74,9 @@ public class AuthUtils {
 
         Users users = refreshTokenEntity.getUser();
 
-        Authentication authentication = createAuthenticationObject(users);
+        final Authentication authentication = createAuthenticationObject(users);
 
-        String accessToken = jwtTokenGenerator.generateAccessToken(authentication);
+        final String accessToken = jwtTokenGenerator.generateAccessToken(authentication);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)

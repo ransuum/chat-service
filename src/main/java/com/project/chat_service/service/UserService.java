@@ -16,7 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Service
 public class UserService {
@@ -40,7 +40,7 @@ public class UserService {
 
         var user = UserMapper.INSTANCE.requestToUser(signUpRequest
                 .encodingPassword(passwordEncoder.encode(signUpRequest.password())));
-        user.setCreatedAt(Instant.now());
+        user.setCreatedAt(LocalDateTime.now());
         user.setRoles((user.getEmail().equals(email) ? "ROLE_ADMIN" : "ROLE_USER"));
 
         Authentication authentication = authUtils.createAuthenticationObject(user);
@@ -62,8 +62,8 @@ public class UserService {
     }
 
     public Users getUserById(String id) {
-        return usersRepo.findById(id).orElseThrow(()
-                -> new NotFoundException("User not found"));
+        return usersRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
 }
