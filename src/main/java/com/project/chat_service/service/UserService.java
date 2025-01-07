@@ -12,11 +12,13 @@ import com.project.chat_service.utils.mapper.UserMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,14 +31,16 @@ public class UserService {
     private final UserRepository usersRepo;
     private final PasswordEncoder passwordEncoder;
     private final AuthUtils authUtils;
+    private final AuthenticationManager authenticationManager;
 
     @Value("${admin.email}")
     private String email;
 
-    public UserService(UserRepository usersRepo, PasswordEncoder passwordEncoder, AuthUtils authUtils) {
+    public UserService(UserRepository usersRepo, PasswordEncoder passwordEncoder, AuthUtils authUtils, AuthenticationManager authenticationManager) {
         this.usersRepo = usersRepo;
         this.passwordEncoder = passwordEncoder;
         this.authUtils = authUtils;
+        this.authenticationManager = authenticationManager;
     }
 
     public AuthResponse getJwtTokensAfterAuthentication(Authentication authentication, HttpServletResponse response) {
@@ -63,21 +67,27 @@ public class UserService {
 
     public AuthResponse authenticate(SignInRequest signInRequest, HttpServletResponse response) {
         try {
-            Users user = usersRepo.findByEmail(signInRequest.email())
-                    .orElseThrow(() -> new NotFoundException("User not found with email: " + signInRequest.email()));
+            log.debug("Attempting authentication for user: {}", signInRequest.email());
 
-            if (!passwordEncoder.matches(signInRequest.password(), user.getPassword())) {
-                throw new BadCredentialsException("Invalid password.");
-            }
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            signInRequest.email(),
+                            signInRequest.password()
+                    )
+            );
 
-            Authentication authentication = authUtils.createAuthenticationObject(user);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             String accessToken = authUtils.generateTokenForAccess(authentication);
             String refreshToken = authUtils.generateTokenForRefresh(authentication);
 
-            authUtils.saveUserRefreshToken(user, refreshToken);
+            Users user = usersRepo.findByEmail(signInRequest.email())
+                    .orElseThrow(() -> new NotFoundException("User not found"));
 
+            authUtils.saveUserRefreshToken(user, refreshToken);
             authUtils.creatRefreshTokenCookie(response, refreshToken);
+
+            response.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
 
             return AuthResponse.builder()
                     .accessToken(accessToken)
@@ -86,9 +96,9 @@ public class UserService {
                     .tokenType(TokenType.Bearer)
                     .build();
 
-        } catch (UsernameNotFoundException | BadCredentialsException e) {
-            log.error("Authentication failed for user: {}", email, e);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage());
+        } catch (AuthenticationException e) {
+            log.error("Authentication failed for user: {}", signInRequest.email(), e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
     }
 
