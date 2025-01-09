@@ -3,6 +3,7 @@ package com.project.chat_service.controller;
 import com.project.chat_service.models.dto.AuthResponse;
 import com.project.chat_service.models.request.SignUpRequest;
 import com.project.chat_service.service.UserService;
+import com.project.chat_service.service.impl.UserServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
 
-    public UserController(UserService userService) {
+    public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
 
