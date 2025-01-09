@@ -8,7 +8,6 @@ import com.project.chat_service.models.request.MessageCreateRequest;
 import com.project.chat_service.repository.ChatRepo;
 import com.project.chat_service.repository.MessageRepo;
 import com.project.chat_service.service.MessageService;
-import com.project.chat_service.utils.authentication_manager.UserConfiguration;
 import com.project.chat_service.utils.mapper.MessageMapper;
 import org.springframework.stereotype.Service;
 
