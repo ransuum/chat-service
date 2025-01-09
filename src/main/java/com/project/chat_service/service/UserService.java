@@ -19,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -62,43 +63,6 @@ public class UserService {
 
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Please Try Again");
-        }
-    }
-
-    public AuthResponse authenticate(SignInRequest signInRequest, HttpServletResponse response) {
-        try {
-            log.debug("Attempting authentication for user: {}", signInRequest.email());
-
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            signInRequest.email(),
-                            signInRequest.password()
-                    )
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            String accessToken = authUtils.generateTokenForAccess(authentication);
-            String refreshToken = authUtils.generateTokenForRefresh(authentication);
-
-            Users user = usersRepo.findByEmail(signInRequest.email())
-                    .orElseThrow(() -> new NotFoundException("User not found"));
-
-            authUtils.saveUserRefreshToken(user, refreshToken);
-            authUtils.creatRefreshTokenCookie(response, refreshToken);
-
-            response.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
-
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .accessTokenExpiry(15 * 60)
-                    .userName(user.getEmail())
-                    .tokenType(TokenType.Bearer)
-                    .build();
-
-        } catch (AuthenticationException e) {
-            log.error("Authentication failed for user: {}", signInRequest.email(), e);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
     }
 
