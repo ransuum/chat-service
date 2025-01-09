@@ -58,13 +58,11 @@ public class MessageServiceImpl implements MessageService {
                 .toList();
     }
 
-    @Override
-    public void deleteMessage(String messageId) {
+    @Override public void deleteMessage(String messageId) {
         messageRepo.deleteById(messageId);
     }
 
-    @Override
-    public String getMessage(String messageId) {
+    @Override public String getMessage(String messageId) {
         return messageRepo.findById(messageId).get().getMessage();
     }
 }
