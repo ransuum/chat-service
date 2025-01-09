@@ -26,7 +26,7 @@ public class UserController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity<?> registerUser(@Valid @ModelAttribute SignUpRequest signUpRequest,
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest,
                                BindingResult bindingResult, HttpServletResponse httpServletResponse) {
         log.info("[AuthController:registerUser]Signup Process Started for user:{}",signUpRequest.email());
         if (bindingResult.hasErrors()) {
