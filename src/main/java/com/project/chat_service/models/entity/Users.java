@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Formula;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.relational.core.mapping.Table;
 import jakarta.persistence.Entity;
@@ -57,4 +58,9 @@ public class Users implements Serializable {
     private LocalDateTime createdAt;
 
     private String address;
+
+    @Formula("(SELECT c.id FROM chat_info c WHERE c.first_user_id = id OR c.second_user_id = id)")
+    @OneToMany
+    @JoinColumn(name = "id", referencedColumnName = "id", insertable = false, updatable = false)
+    private List<Chat> chats;
 }

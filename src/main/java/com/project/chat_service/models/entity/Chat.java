@@ -25,12 +25,10 @@ public class Chat implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "first_user_id", nullable = false)
-    @Column(name = "first_user")
     private Users firstUser;
 
     @ManyToOne
     @JoinColumn(name = "second_user_id", nullable = false)
-    @Column(name = "second_user")
     private Users secondUser;
 
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
